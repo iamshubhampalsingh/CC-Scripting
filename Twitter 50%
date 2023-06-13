@@ -1,0 +1,88 @@
+import uiautomator2 as ui2
+import time
+import subprocess
+
+# Connect to the devices
+receiver_device_serial = "192.168.43.179:5555"
+sender_device_serial = 'cf611ff9'
+receiver_device = ui2.Device(receiver_device_serial)
+sender_device = ui2.Device(sender_device_serial)
+
+# Acquire wake lock for receiver device
+wake_lock_command = f"adb -s {receiver_device_serial} shell svc power stayon true"
+subprocess.run(wake_lock_command, shell=True, check=True)
+
+# Open settings on receiver device
+settings_command = f"adb -s {receiver_device_serial} shell am start -a android.settings.SETTINGS"
+subprocess.run(settings_command, shell=True, check=True)
+
+# Wait for settings activity to open
+time.sleep(2)
+
+# Go to SIM Cards on receiver device
+receiver_device(text="SIM cards").click()
+time.sleep(2)
+
+# Disable SIM2 on receiver device
+receiver_device.click(0.848, 0.236)  # Modify the coordinates based on your device's screen
+time.sleep(2)
+receiver_device(text="Yes").click()
+time.sleep(2)
+
+# Turn off the receiver device
+turn_off_command = f"adb -s {receiver_device_serial} shell input keyevent 26"
+subprocess.run(turn_off_command, shell=True, check=True)
+time.sleep(2)
+
+# Compose the message on sender device
+sender_device.app_start("com.whatsapp")
+time.sleep(2)
+sender_device(resourceId="com.whatsapp:id/fab").click()
+time.sleep(2)
+sender_device(text="AAAAA").click()
+time.sleep(2)
+
+# Collect battery usage data
+subprocess.call(["adb", "shell", "dumpsys", "batterystats", "--reset"])
+subprocess.call(["adb", "shell", "dumpsys", "batterystats", "--start"])
+
+# Send multiple messages
+num_run = 18
+for i in range(num_run):
+    time.sleep(10)
+    # Enter text in the chat input field
+    chat_input = sender_device(resourceId="com.whatsapp:id/entry")
+    chat_input.set_text("hello")
+
+    # Tap on the send button
+    send_button = sender_device(resourceId="com.whatsapp:id/send")
+    send_button.click()
+
+time.sleep(2)
+
+# Stop collecting battery usage data
+subprocess.call(["adb", "shell", "dumpsys", "batterystats", "--stop"])
+
+# Save battery usage data to a file
+subprocess.call(["adb", "bugreport", "/bugreports"])
+
+# Put the receiver device in standby mode
+standby_command = f"adb -s {receiver_device_serial} shell input keyevent KEYCODE_POWER"
+subprocess.run(standby_command, shell=True, check=True)
+
+# Wait for the receiver device to go into standby mode (adjust the sleep duration as needed)
+time.sleep(10)
+
+# Measure battery current on receiver device
+battery_info = subprocess.check_output(["adb", "shell", "dumpsys", "batteryinfo"]).decode().strip()
+print(battery_info)
+
+# Release wake lock for receiver device
+wake_lock_release_command = f"adb -s {receiver_device_serial} shell svc power stayon false"
+subprocess.run(wake_lock_release_command, shell=True, check=True)
+
+# Transfer bug report file from receiver device to local machine or server
+subprocess.call(["adb", "pull", "/bugreports", "bugreports"])
+
+# Run Battery Historian on your local machine or server using the transferred bug report file
+# Refer to the Battery Historian
