@@ -1,0 +1,90 @@
+import uiautomator2 as ui2
+import time
+import subprocess
+
+# Connect to the devices
+receiver_device_serial = "192.168.43.179:5555"
+receiver_device = ui2.Device(receiver_device_serial)
+
+# Acquire wake lock for receiver device
+wake_lock_command = f"adb -s {receiver_device_serial} shell svc power stayon true"
+subprocess.run(wake_lock_command, shell=True, check=True)
+
+# Define the initial swipe coordinates
+start_x = 500
+start_y = 500
+end_y = 1500
+swipe_duration = 0.5
+
+
+# Perform multiple swipes to scroll the screen downwards
+num_swipes = 5  # Adjust the number of swipes as needed
+for _ in range(num_swipes):
+    receiver_device.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
+    time.sleep(1)  # Adjust the delay between swipes if necessary
+receiver_device.click(0.723, 0.142)   
+time.sleep(2)
+d.press("home")
+
+# Open settings on receiver device
+settings_command = f"adb -s {receiver_device_serial} shell am start -a android.settings.SETTINGS"
+subprocess.run(settings_command, shell=True, check=True)
+
+# Wait for settings activity to open
+time.sleep(2)
+
+# Go to SIM Cards on receiver device
+receiver_device(text="SIM cards").click()
+time.sleep(2)
+
+# Disable SIM2 on receiver device
+receiver_device.click(0.848, 0.236)  # Modify the coordinates based on your device's screen
+time.sleep(2)
+receiver_device(text="Yes").click()
+time.sleep(2)
+receiver_device.press("home")
+time.sleep(2)
+receiver_device(scrollable=True).scroll.toEnd()
+time.sleep(2)
+receiver_device(resourceId="com.android.launcher3:id/icon", text="Facebook").click()
+time.sleep(2)
+receiver_device.click(0.473, 0.218)
+time.sleep(2)
+# Input the desired text into the status update
+receiver_device.xpath('//android.widget.ScrollView/android.widget.LinearLayout[1]/android.widget.FrameLayout[1]').set_text("Lava mobile - Rethink what a phone can do")
+time.sleep(2)
+# Post the status update
+receiver_device(description="POST").click()
+time.sleep(2)
+receiver_device.click(0.473, 0.218)
+time.sleep(2)
+receiver_device(description="Photo/video").click()
+time.sleep(2)
+receiver_device.click(0.089, 0.288)
+time.sleep(2)
+receiver_device(description="POST").click()
+time.sleep(300)
+receiver_device.press("home")
+# Collect battery usage data
+subprocess.call(["adb", "shell", "dumpsys", "batterystats", "--reset"])
+subprocess.call(["adb", "shell", "dumpsys", "batterystats", "--start"])
+
+time.sleep(2)
+
+# Stop collecting battery usage data
+subprocess.call(["adb", "shell", "dumpsys", "batterystats", "--stop"])
+
+# Measure battery current on receiver device
+battery_info_command = f"adb -s {receiver_device_serial} shell dumpsys battery"
+battery_info = subprocess.check_output(battery_info_command.split()).decode().strip()
+print(battery_info)
+
+# Release wake lock for receiver device
+wake_lock_release_command = f"adb -s {receiver_device_serial} shell svc power stayon false"
+subprocess.run(wake_lock_release_command, shell=True, check=True)
+
+# Transfer bug report file from receiver device to local machine or server
+subprocess.call(["adb", "pull", "/bugreports", "bugreports"])
+
+# Run Battery Historian on your local machine or server using the transferred bug report file
+# Refer to the Battery Historian documentation for detailed instructions on how to start the Battery Historian server
