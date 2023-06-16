@@ -79,3 +79,11 @@ subprocess.call(["adb", "-s", receiver_device_serial, "pull", "/bugreports", "bu
 # Run Battery Historian on your local machine or server using the transferred bug report file
 # Refer to the Battery Historian documentation for detailed instructions on how to start the Battery Historian server
 
+
+
+
+
+
+
+
+
