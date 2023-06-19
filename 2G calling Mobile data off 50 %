@@ -1,0 +1,108 @@
+import uiautomator2 as ui2
+import time
+import subprocess
+
+# Connect to the devices
+receiver_device_serial = "K8503021700241"
+receiver_device = ui2.Device(receiver_device_serial)
+
+# Acquire wake lock for receiver device
+subprocess.run(["adb", "-s", receiver_device_serial, "shell", "svc", "power", "stayon", "true"], check=True)
+
+# Wait for settings activity to open
+time.sleep(2)
+# Collect battery usage data
+subprocess.run(["adb", "shell", "dumpsys", "batterystats", "--reset"])
+subprocess.run(["adb", "shell", "dumpsys", "batterystats", "--start"])
+
+time.sleep(2)
+# Define the initial swipe coordinates
+start_x = 500
+start_y = 500
+end_y = 1500
+swipe_duration = 0.5
+
+# Perform multiple swipes to scroll the screen downwards
+num_swipes = 5  # Adjust the number of swipes as needed
+for _ in range(num_swipes):
+    receiver_device.swipe(start_x, start_y, start_x, end_y, duration=swipe_duration)
+    time.sleep(1)  # Adjust the delay between swipes if necessary
+receiver_device.click(0.383, 0.142)
+time.sleep(2)
+receiver_device.press("home")
+
+# Open settings on receiver device
+subprocess.run(["adb", "-s", receiver_device_serial, "shell", "am", "start", "-a", "android.settings.SETTINGS"], check=True)
+
+# Open SIM Cards settings on receiver device
+receiver_device(scrollable=True).scroll.to(text="SIM cards")
+receiver_device(text="SIM cards").click()
+time.sleep(2)
+# Disable SIM2 on receiver device
+receiver_device.click(0.861, 0.232)
+time.sleep(2)
+receiver_device(text="Yes").click()
+time.sleep(2)
+receiver_device(resourceId="com.android.systemui:id/back").click()
+time.sleep(2)
+receiver_device(text="Mobile network").click()
+time.sleep(2)
+receiver_device(text="IND airtel 6").click()
+time.sleep(2)
+receiver_device(text="Advanced").click()
+time.sleep(2)
+receiver_device(text="Preferred network type").click()
+time.sleep(2)
+receiver_device(text="2G").click()
+time.sleep(2)
+receiver_device.press("home")
+time.sleep(2)
+receiver_device(text="Phone").click()
+time.sleep(2)
+receiver_device(text="Contacts").click()
+time.sleep(2)
+# Dial a number
+num_runs = 20
+for run in range(num_runs):
+ time.sleep(2)
+ receiver_device(resourceId='com.google.android.dialer:id/dialpad_fab').click()
+ receiver_device(text='8').click()
+ receiver_device(text='5').click()
+ receiver_device(text='2').click()
+ receiver_device(text='7').click()
+ receiver_device(text='7').click()
+ receiver_device(text='4').click()
+ receiver_device(text='6').click()
+ receiver_device(text='8').click()
+ receiver_device(text='9').click()
+ receiver_device(text='7').click()
+ time.sleep(2)
+ receiver_device(text="Call").click()
+ time.sleep(15)
+ receiver_device(resourceId="com.google.android.dialer:id/incall_end_call").click()
+    
+print("The google dialer for 3 minutes")
+
+result = subprocess.run(['adb', 'shell', 'dumpsys', 'battery'], capture_output=True, text=True)
+time.sleep(2)
+receiver_device(resourceId="com.android.systemui:id/center_group").click()
+time.sleep(2)
+receiver_device(resourceId="com.android.systemui:id/recent_apps").click()
+time.sleep(2)
+receiver_device(text="Clear all").click()
+    
+# Stop collecting battery usage data
+subprocess.run(["adb", "shell", "dumpsys", "batterystats", "--stop"])
+
+# Measure battery current on receiver device
+battery_info = subprocess.check_output(["adb", "-s", receiver_device_serial, "shell", "dumpsys", "battery"]).decode().strip()
+print(battery_info)
+
+# Release wake lock for receiver device
+subprocess.run(["adb", "-s", receiver_device_serial, "shell", "svc", "power", "stayon", "false"], check=True)
+
+# Transfer bug report file from receiver device to local machine or server
+subprocess.call(["adb", "pull", "/bugreports", "bugreports"])
+
+# Run Battery Historian on your local machine or server using the transferred bug report file
+# Refer to the Battery Historian documentation for detailed instructions on how to start the Battery Historian server
